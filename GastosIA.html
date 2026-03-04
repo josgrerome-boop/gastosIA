@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0a0f">
+<title>GastosIA</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700;800&display=swap');
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+body{font-family:'DM Sans','Segoe UI',sans-serif;background:#0a0a0f;color:#f0f0f8;min-height:100vh}
+input,select,button,label{font-family:inherit}
+select option{background:#1a1a24;color:#f0f0f8}
+::-webkit-scrollbar{display:none}
+.app{max-width:500px;margin:0 auto;min-height:100vh}
+.topbar{background:rgba(10,10,15,.97);border-bottom:1px solid #2a2a3a;padding:.85rem 1.1rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.logo{font-weight:800;font-size:1.25rem}.logo span{color:#00e5a0}
+.topbtns{display:flex;gap:.4rem}
+.ibtn{border:none;color:#fff;border-radius:9px;width:36px;height:36px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center}
+.ibtn:active{opacity:.7}
+.stats{display:flex;gap:.6rem;padding:.9rem 1.1rem;overflow-x:auto}
+.sp{flex-shrink:0;background:#111118;border:1px solid #2a2a3a;border-radius:12px;padding:.6rem 1rem;text-align:center;min-width:82px;position:relative;overflow:hidden}
+.sp::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#00e5a0,#7c3aed)}
+.sl{font-family:monospace;font-size:.57rem;color:#6b6b8a;text-transform:uppercase}
+.sv{font-weight:800;font-size:.98rem;color:#00e5a0;margin-top:2px}
+.sv.m{color:#6b6b8a}
+.tabs{display:flex;border-bottom:1px solid #2a2a3a}
+.tab{flex:1;padding:.8rem .3rem;text-align:center;font-weight:700;font-size:.79rem;color:#6b6b8a;background:none;border:none;border-bottom:2px solid transparent;cursor:pointer}
+.tab.on{color:#00e5a0;border-bottom-color:#00e5a0}
+.panel{padding:1.1rem;padding-bottom:5rem;display:none}
+.panel.on{display:block}
+.dz{border:2px dashed #2a2a3a;border-radius:14px;background:#1a1a24;padding:1.8rem 1rem;text-align:center;cursor:pointer;margin-bottom:.8rem;transition:border-color .2s,background .2s;position:relative;overflow:hidden}
+.dz.over{border-color:#00e5a0;background:rgba(0,229,160,.05)}
+.dz input[type=file]{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;font-size:0}
+.dz-icon{font-size:2.5rem;margin-bottom:.5rem}
+.dz-title{font-weight:700;font-size:.9rem;margin-bottom:.3rem}
+.dz-sub{font-size:.74rem;color:#6b6b8a;line-height:1.75}
+.prev-wrap{position:relative}
+.prev-wrap img{width:100%;max-height:175px;object-fit:cover;border-radius:8px;display:block}
+.prev-rm{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.85);border:none;color:#fff;width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:.75rem}
+.tip{background:rgba(0,229,160,.05);border:1px solid rgba(0,229,160,.18);border-radius:10px;padding:.7rem .9rem;margin-bottom:.9rem;font-size:.74rem;color:#6b6b8a;line-height:1.75}
+.tip b{color:#00e5a0}
+.st{display:none;align-items:flex-start;gap:.5rem;padding:.8rem 1rem;border-radius:10px;margin-bottom:.8rem;font-size:.79rem;font-family:monospace;line-height:1.4}
+.st.ld{display:flex;background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.3);color:#a78bfa}
+.st.ok{display:flex;background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.3);color:#00e5a0}
+.st.er{display:flex;background:rgba(255,77,109,.1);border:1px solid rgba(255,77,109,.3);color:#ff4d6d}
+.spin{width:13px;height:13px;border:2px solid transparent;border-top-color:currentColor;border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0;margin-top:1px}
+.fl{margin-bottom:.8rem}
+.fl label{display:block;font-size:.67rem;color:#6b6b8a;text-transform:uppercase;letter-spacing:.8px;font-family:monospace;margin-bottom:.32rem}
+.inp{width:100%;background:#1a1a24;border:1px solid #2a2a3a;color:#f0f0f8;padding:.75rem .9rem;border-radius:10px;font-size:.95rem;outline:none;transition:border-color .2s}
+.inp:focus{border-color:#00e5a0}
+select.inp{-webkit-appearance:none;appearance:none}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+.div{border:none;border-top:1px solid #2a2a3a;margin:1rem 0}
+.slbl{font-family:monospace;font-size:.67rem;color:#6b6b8a;text-transform:uppercase;letter-spacing:1px;margin-bottom:.55rem}
+.btn{width:100%;padding:.9rem;border-radius:12px;border:none;font-weight:700;font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.4rem;margin-bottom:.6rem;transition:opacity .15s}
+.btn:active{opacity:.75}
+.btn:disabled{opacity:.4;pointer-events:none}
+.bp{background:#00e5a0;color:#000}
+.bs{background:#1a1a24;color:#f0f0f8;border:1px solid #2a2a3a}
+.bx{background:linear-gradient(135deg,#1d6f42,#107c41);color:#fff}
+.bg{background:linear-gradient(135deg,#1a73e8,#4285f4);color:#fff}
+.bd{background:rgba(255,77,109,.1);color:#ff4d6d;border:1px solid rgba(255,77,109,.3)}
+.bg2{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:.8rem}
+.bg2 .btn{margin-bottom:0}
+.cc{border-radius:12px;padding:1rem;margin-bottom:1rem}
+.cc.pu{background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.25)}
+.cc.bl{background:rgba(66,133,244,.08);border:1px solid rgba(66,133,244,.25)}
+.cc-title{font-family:monospace;font-size:.67rem;text-transform:uppercase;letter-spacing:.8px;margin-bottom:.5rem}
+.cc.pu .cc-title{color:#a78bfa}.cc.bl .cc-title{color:#7baaf7}
+.cc-hint{font-size:.67rem;margin-top:.4rem;opacity:.8;line-height:1.6}
+.cc.pu .cc-hint{color:#a78bfa}.cc.bl .cc-hint{color:#7baaf7}
+.gc{background:#111118;border:1px solid #2a2a3a;border-radius:14px;overflow:hidden}
+.gc-hd{padding:1rem 1.1rem;display:flex;align-items:center;gap:.5rem;cursor:pointer;font-weight:700;font-size:.88rem}
+.gc-bd{padding:0 1.1rem 1.1rem;display:none}
+.gc-bd.on{display:block}
+.gs{background:#1a1a24;border-radius:10px;padding:.9rem 1rem;margin-bottom:.7rem}
+.gs-t{font-weight:700;font-size:.85rem;margin-bottom:.35rem}
+.gs ol{color:#6b6b8a;font-size:.82rem;line-height:2.1;padding-left:1.2rem}
+.gs ol strong{color:#f0f0f8}
+.spre{background:#0a0a0f;border:1px solid #2a2a3a;border-radius:8px;padding:.8rem;margin-top:.5rem;overflow-x:auto;font-size:.67rem;line-height:1.5;color:#e2e8f0;white-space:pre;font-family:monospace}
+.cpbtn{background:#1a1a24;border:1px solid #2a2a3a;color:#00e5a0;padding:.5rem 1rem;border-radius:8px;font-family:monospace;font-size:.74rem;cursor:pointer;margin-top:.5rem;width:100%}
+.card{background:#111118;border:1px solid #2a2a3a;border-radius:14px;padding:.9rem 1rem;margin-bottom:.65rem;position:relative;border-left:3px solid #00e5a0;animation:fadeIn .25s ease}
+.ctop{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.35rem}
+.cname{font-weight:700;font-size:.94rem;max-width:72%}
+.cval{font-family:monospace;font-size:.94rem;color:#00e5a0}
+.ctags{display:flex;flex-wrap:wrap;gap:.35rem}
+.tag{padding:2px 7px;border-radius:20px;font-size:.64rem;font-family:monospace}
+.tdate{background:rgba(255,255,255,.05);color:#6b6b8a}
+.tnit{background:rgba(255,255,255,.04);color:#6b6b8a}
+.tnum{background:rgba(124,58,237,.1);color:#a78bfa}
+.tcat{background:rgba(0,229,160,.1);color:#00e5a0}
+.tsync{background:rgba(66,133,244,.1);color:#7baaf7}
+.ccon{font-size:.77rem;color:#6b6b8a;margin-top:.3rem}
+.cdel{position:absolute;top:8px;right:8px;background:none;border:none;color:#6b6b8a;cursor:pointer;font-size:1rem;padding:.2rem}
+.cdel:active{color:#ff4d6d}
+.empty{text-align:center;padding:3rem 1rem;color:#6b6b8a}
+.ei{font-size:3rem;margin-bottom:.7rem}
+.tbar{position:sticky;bottom:0;background:rgba(10,10,15,.97);border-top:1px solid #2a2a3a;padding:.85rem 1.1rem;display:flex;justify-content:space-between;align-items:center}
+.tlbl{font-family:monospace;font-size:.7rem;color:#6b6b8a}
+.tval{font-weight:800;font-size:1.3rem;color:#00e5a0}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="topbar">
+  <div class="logo">Gastos<span>IA</span></div>
+  <div class="topbtns">
+    <button class="ibtn" style="background:#1d6f42" onclick="exportExcel()" title="Excel">&#128202;</button>
+    <button class="ibtn" style="background:#4285f4" onclick="enviarSheets()" title="Google Sheets">&#128228;</button>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="sp"><div class="sl">Facturas</div><div class="sv" id="sc">0</div></div>
+  <div class="sp"><div class="sl">Total</div><div class="sv" id="st">$0</div></div>
+  <div class="sp"><div class="sl">Este mes</div><div class="sv" id="sm">$0</div></div>
+  <div class="sp"><div class="sl">Sin sync</div><div class="sv m" id="sp">0</div></div>
+</div>
+
+<div class="tabs">
+  <button class="tab on" onclick="tab('captura',this)">&#128247; Capturar</button>
+  <button class="tab" onclick="tab('gastos',this)">&#129534; Gastos</button>
+  <button class="tab" onclick="tab('config',this)">&#9881; Config</button>
+</div>
+
+<!-- CAPTURA -->
+<div class="panel on" id="p-captura">
+  <div class="slbl">Imagen de la factura</div>
+  <div class="dz" id="dz">
+    <div id="dzc">
+      <div class="dz-icon">&#128196;</div>
+      <div class="dz-title">Toca para seleccionar imagen</div>
+      <div class="dz-sub">Elige desde Camara o Galeria<br>En PC: arrastra o pega con Ctrl+V</div>
+    </div>
+    <input type="file" accept="image/*" id="finput" onchange="cargarArchivo(this.files[0])">
+  </div>
+  <div class="tip">
+    <b>&#128241; Android:</b> Al tocar la zona gris, Android pregunta si abrir Camara o Galeria. Elige la opcion que necesitas.<br>
+    <b>&#128187; PC:</b> Copia una imagen (Ctrl+C) y pega aqui con Ctrl+V, o arrastra el archivo.
+  </div>
+  <div class="st" id="stbox"><div class="spin" id="stspin"></div><span id="stmsg"></span></div>
+  <button class="btn bp" id="btnext" disabled onclick="extraerIA()">&#9889; Extraer Datos con IA</button>
+  <hr class="div">
+  <div class="slbl">Datos de la factura</div>
+  <div class="fl"><label>Proveedor / Empresa *</label><input class="inp" id="fp" placeholder="Nombre del proveedor"></div>
+  <div class="r2">
+    <div class="fl"><label>NIT / RUT</label><input class="inp" id="fn" placeholder="9001234567"></div>
+    <div class="fl"><label>N. Factura</label><input class="inp" id="ff" placeholder="FAC-001"></div>
+  </div>
+  <div class="r2">
+    <div class="fl"><label>Fecha</label><input class="inp" type="date" id="fd"></div>
+    <div class="fl"><label>Valor Total *</label><input class="inp" type="number" inputmode="decimal" id="fv" placeholder="0"></div>
+  </div>
+  <div class="fl"><label>Concepto</label><input class="inp" id="fc" placeholder="Descripcion del gasto"></div>
+  <div class="fl"><label>Categoria</label>
+    <select class="inp" id="fk">
+      <option value="">Seleccionar...</option>
+      <option>Servicios</option><option>Materiales</option><option>Tecnologia</option>
+      <option>Transporte</option><option>Alimentacion</option><option>Arriendo</option>
+      <option>Servicios Publicos</option><option>Honorarios</option><option>Papeleria</option><option>Otros</option>
+    </select>
+  </div>
+  <button class="btn bs" onclick="agregar()">&#43; Agregar a la Lista</button>
+</div>
+
+<!-- GASTOS -->
+<div class="panel" id="p-gastos">
+  <div class="bg2">
+    <button class="btn bx" onclick="exportExcel()">&#128202; Excel</button>
+    <button class="btn bg" onclick="enviarSheets()">&#128228; Sheets</button>
+  </div>
+  <div class="st" id="stbox2"><div class="spin"></div><span id="stmsg2"></span></div>
+  <div id="glist"></div>
+</div>
+
+<!-- CONFIG -->
+<div class="panel" id="p-config">
+  <div class="cc pu">
+    <div class="cc-title">&#129302; API Key de Claude</div>
+    <input class="inp" type="password" id="cfgkey" placeholder="sk-ant-api03-..." oninput="localStorage.setItem('gIA_k',this.value)">
+    <div class="cc-hint">Obtén en console.anthropic.com &#8594; API Keys<br>Se guarda solo en este dispositivo.</div>
+  </div>
+  <div class="cc bl">
+    <div class="cc-title">&#128202; Google Sheets &#8212; URL Web App</div>
+    <input class="inp" type="url" id="cfgsh" placeholder="https://script.google.com/macros/s/..." oninput="localStorage.setItem('gIA_s',this.value)">
+    <div class="cc-hint">Script debe usar doGet(). Ver guia abajo.</div>
+  </div>
+  <hr class="div">
+  <button class="btn bd" onclick="if(confirm('Borrar TODOS?')){gastos=[];save();render();stats();}">&#128465; Borrar todos los registros</button>
+  <hr class="div">
+  <div class="gc">
+    <div class="gc-hd" onclick="toggleGuia()">
+      <span style="color:#4285f4">&#128203;</span> Como conectar Google Sheets
+      <span id="garr" style="margin-left:auto;color:#6b6b8a;font-size:.8rem">&#9660;</span>
+    </div>
+    <div class="gc-bd" id="gbody">
+      <div class="gs" style="border-left:3px solid #00e5a0">
+        <div class="gs-t" style="color:#00e5a0">Paso 1 &#8212; Google Sheet</div>
+        <ol><li>Ve a sheets.google.com y crea una hoja nueva</li><li>Fila 1 con encabezados: <code style="background:#0a0a0f;padding:1px 5px;border-radius:3px;font-size:.72rem;color:#00e5a0">Fecha | Proveedor | NIT | N.Factura | Concepto | Categoria | Valor</code></li></ol>
+      </div>
+      <div class="gs" style="border-left:3px solid #4285f4">
+        <div class="gs-t" style="color:#4285f4">Paso 2 &#8212; Apps Script</div>
+        <ol><li>En el Sheet: <strong>Extensiones &#8594; Apps Script</strong></li><li>Borra todo el codigo existente y pega este:</li></ol>
+        <pre class="spre" id="scriptcode">function doGet(e) {
+  try {
+    var p = e.parameter;
+    var sheet = SpreadsheetApp
+      .getActiveSpreadsheet()
+      .getActiveSheet();
+    sheet.appendRow([
+      p.fecha, p.proveedor, p.nit,
+      p.numero_factura, p.concepto,
+      p.categoria, p.valor
+    ]);
+    return ContentService
+      .createTextOutput("ok");
+  } catch(err) {
+    return ContentService
+      .createTextOutput("error:"+err.message);
+  }
+}</pre>
+        <button class="cpbtn" onclick="copiarScript()">&#128203; Copiar codigo</button>
+      </div>
+      <div class="gs" style="border-left:3px solid #fbbf24">
+        <div class="gs-t" style="color:#fbbf24">Paso 3 &#8212; Desplegar</div>
+        <ol>
+          <li><strong>Implementar &#8594; Nueva implementacion</strong></li>
+          <li>Tipo: <strong>Aplicacion web</strong></li>
+          <li>Ejecutar como: <strong>Yo</strong></li>
+          <li>Acceso: <strong>Cualquier persona</strong></li>
+          <li>Clic en Implementar &#8594; autoriza &#8594; copia la <strong>URL</strong></li>
+        </ol>
+      </div>
+      <div class="gs" style="border-left:3px solid #7c3aed">
+        <div class="gs-t" style="color:#7c3aed">Paso 4 &#8212; Conectar</div>
+        <ol><li>Pega la URL en el campo de Config arriba</li><li>Toca el icono azul para sincronizar registros</li></ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tbar">
+  <div class="tlbl">TOTAL ACUMULADO</div>
+  <div class="tval" id="ftotal">$0</div>
+</div>
+</div>
+
+<script>
+var gastos=JSON.parse(localStorage.getItem('gIA_v6')||'[]');
+var b64=null;
+var API='https://api.anthropic.com/v1/messages';
+
+// Restaurar config
+var k=localStorage.getItem('gIA_k'); if(k) document.getElementById('cfgkey').value=k;
+var s=localStorage.getItem('gIA_s'); if(s) document.getElementById('cfgsh').value=s;
+document.getElementById('fd').value=hoy();
+render(); stats();
+
+// TABS
+function tab(name,el){
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('on');});
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('on');});
+  el.classList.add('on');
+  document.getElementById('p-'+name).classList.add('on');
+}
+
+// IMAGEN - toJpeg via canvas (acepta cualquier formato)
+function toJpeg(src,cb){
+  var img=new Image();
+  img.onload=function(){
+    var MAX=1600,w=img.naturalWidth,h=img.naturalHeight;
+    if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}
+    var c=document.createElement('canvas');c.width=w;c.height=h;
+    var ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);ctx.drawImage(img,0,0,w,h);
+    cb(c.toDataURL('image/jpeg',0.88));
+  };
+  img.onerror=function(){st('er','No se pudo cargar la imagen');};
+  img.src=src;
+}
+
+function cargarArchivo(file){
+  if(!file||!file.type.startsWith('image/')){st('er','Selecciona una imagen valida');return;}
+  st('ld','Procesando imagen...');
+  var r=new FileReader();
+  r.onload=function(e){
+    toJpeg(e.target.result,function(jpeg){
+      b64=jpeg.split(',')[1];
+      var dz=document.getElementById('dz');
+      dz.innerHTML='<div class="prev-wrap"><img src="'+jpeg+'" alt="Factura"><button class="prev-rm" onclick="limpiar(event)">X</button></div>'
+        +'<input type="file" accept="image/*" style="position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;font-size:0" onchange="cargarArchivo(this.files[0])">';
+      document.getElementById('btnext').disabled=false;
+      st('ok','Imagen lista. Toca Extraer Datos con IA.');
+    });
+  };
+  r.readAsDataURL(file);
+}
+
+function limpiar(e){
+  if(e)e.stopPropagation();
+  b64=null;
+  document.getElementById('btnext').disabled=true;
+  document.getElementById('dz').innerHTML='<div id="dzc"><div class="dz-icon">&#128196;</div><div class="dz-title">Toca para seleccionar imagen</div><div class="dz-sub">Elige desde Camara o Galeria<br>En PC: arrastra o pega con Ctrl+V</div></div><input type="file" accept="image/*" id="finput" onchange="cargarArchivo(this.files[0])">';
+  hideSt();
+}
+
+// Drag & Drop
+var dz=document.getElementById('dz');
+dz.addEventListener('dragover',function(e){e.preventDefault();dz.classList.add('over');});
+dz.addEventListener('dragleave',function(){dz.classList.remove('over');});
+dz.addEventListener('drop',function(e){e.preventDefault();dz.classList.remove('over');var f=e.dataTransfer.files[0];if(f)cargarArchivo(f);});
+
+// Paste Ctrl+V
+window.addEventListener('paste',function(e){
+  var items=Array.from(e.clipboardData?e.clipboardData.items:[]);
+  var img=items.find(function(i){return i.type.startsWith('image/');});
+  if(img){e.preventDefault();cargarArchivo(img.getAsFile());}
+});
+
+// EXTRAER IA
+function extraerIA(){
+  var apiKey=document.getElementById('cfgkey').value.trim()||localStorage.getItem('gIA_k');
+  if(!apiKey){st('er','Ve a Config y agrega tu API Key de Claude');return;}
+  if(!b64){st('er','Carga la imagen primero');return;}
+  document.getElementById('btnext').disabled=true;
+  st('ld','Analizando factura con Claude IA...');
+  fetch(API,{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-api-key':apiKey,
+      'anthropic-version':'2023-06-01',
+      'anthropic-dangerous-direct-browser-calls':'true'
+    },
+    body:JSON.stringify({
+      model:'claude-opus-4-5',
+      max_tokens:600,
+      messages:[{role:'user',content:[
+        {type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
+        {type:'text',text:'Analiza esta factura. Responde SOLO JSON puro sin markdown ni backticks:\n{"proveedor":"empresa emisora","nit":"NIT sin puntos","numero_factura":"codigo","fecha":"YYYY-MM-DD","valor_total":numero,"concepto":"descripcion breve"}\nSi no encuentras un campo usa cadena vacia o 0.'}
+      ]}]
+    })
+  })
+  .then(function(r){return r.json().then(function(d){return{ok:r.ok,d:d};});})
+  .then(function(r){
+    if(!r.ok)throw new Error(r.d.error?r.d.error.message:'Error API '+r.d);
+    var raw=r.d.content.map(function(b){return b.text||'';}).join('').replace(/```json|```/g,'').trim();
+    var p=JSON.parse(raw);
+    document.getElementById('fp').value=p.proveedor||'';
+    document.getElementById('fn').value=p.nit||'';
+    document.getElementById('ff').value=p.numero_factura||'';
+    document.getElementById('fd').value=p.fecha||hoy();
+    document.getElementById('fv').value=p.valor_total||'';
+    document.getElementById('fc').value=p.concepto||'';
+    st('ok','Datos extraidos. Revisa y toca Agregar.');
+  })
+  .catch(function(err){st('er','Error: '+err.message);})
+  .finally(function(){document.getElementById('btnext').disabled=false;});
+}
+
+// AGREGAR
+function agregar(){
+  var prov=document.getElementById('fp').value.trim();
+  var val=parseFloat(document.getElementById('fv').value);
+  if(!prov){st('er','El campo Proveedor es obligatorio');return;}
+  if(!val||isNaN(val)){st('er','Ingresa un valor valido');return;}
+  gastos.push({id:Date.now(),fecha:document.getElementById('fd').value||hoy(),proveedor:prov,nit:document.getElementById('fn').value,numero_factura:document.getElementById('ff').value,concepto:document.getElementById('fc').value,categoria:document.getElementById('fk').value,valor:val,synced:false});
+  save();render();stats();
+  ['fp','fn','ff','fv','fc'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('fd').value=hoy();
+  document.getElementById('fk').value='';
+  limpiar();
+  st('ok','Gasto agregado. Ve a Gastos para verlo.');
+  setTimeout(function(){tab('gastos',document.querySelectorAll('.tab')[1]);},1500);
+}
+
+// RENDER
+function render(){
+  var el=document.getElementById('glist');
+  if(!gastos.length){el.innerHTML='<div class="empty"><div class="ei">&#129534;</div><div>Sin registros aun</div><div style="font-size:.79rem;margin-top:.3rem">Ve a Capturar para agregar facturas</div></div>';return;}
+  el.innerHTML=gastos.slice().reverse().map(function(g){
+    var tg='<span class="tag tdate">'+g.fecha+'</span>';
+    if(g.nit)tg+='<span class="tag tnit">'+g.nit+'</span>';
+    if(g.numero_factura)tg+='<span class="tag tnum">'+g.numero_factura+'</span>';
+    if(g.categoria)tg+='<span class="tag tcat">'+g.categoria+'</span>';
+    if(g.synced)tg+='<span class="tag tsync">&#10003; Sheets</span>';
+    return '<div class="card"><div class="ctop"><div class="cname">'+g.proveedor+'</div><div class="cval">$'+fmt(g.valor)+'</div></div><div class="ctags">'+tg+'</div>'+(g.concepto?'<div class="ccon">'+g.concepto+'</div>':'')+'<button class="cdel" onclick="del('+g.id+')">&#128465;</button></div>';
+  }).join('');
+}
+
+function del(id){if(!confirm('Eliminar?'))return;gastos=gastos.filter(function(g){return g.id!==id;});save();render();stats();}
+
+// STATS
+function stats(){
+  var tot=gastos.reduce(function(s,g){return s+g.valor;},0);
+  var mes=hoy().substring(0,7);
+  var tm=gastos.filter(function(g){return g.fecha&&g.fecha.startsWith(mes);}).reduce(function(s,g){return s+g.valor;},0);
+  var pend=gastos.filter(function(g){return!g.synced;}).length;
+  document.getElementById('sc').textContent=gastos.length;
+  document.getElementById('st').textContent='$'+fmt(tot);
+  document.getElementById('sm').textContent='$'+fmt(tm);
+  document.getElementById('sp').textContent=pend;
+  document.getElementById('ftotal').textContent='$'+fmt(tot);
+}
+
+// EXCEL
+function exportExcel(){
+  if(!gastos.length){alert('No hay gastos para exportar');return;}
+  var h=['#','Fecha','Proveedor','NIT','N Factura','Concepto','Categoria','Valor'];
+  var rows=gastos.map(function(g,i){return[i+1,g.fecha,g.proveedor,g.nit,g.numero_factura,g.concepto,g.categoria,g.valor];});
+  var tot=gastos.reduce(function(s,g){return s+g.valor;},0);
+  rows.push(['','','','','','','TOTAL',tot]);
+  var ws=XLSX.utils.aoa_to_sheet([h].concat(rows));
+  var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Gastos');
+  XLSX.writeFile(wb,'Gastos_'+hoy()+'.xlsx');
+}
+
+// SHEETS
+function enviarSheets(){
+  var url=document.getElementById('cfgsh').value.trim()||localStorage.getItem('gIA_s');
+  if(!url){alert('Configura la URL de Google Sheets en Config');tab('config',document.querySelectorAll('.tab')[2]);return;}
+  if(!gastos.length){alert('No hay gastos para enviar');return;}
+  var pend=gastos.filter(function(g){return!g.synced;});
+  if(!pend.length){st2('ok','Todos los registros ya estan sincronizados');return;}
+  st2('ld','Enviando '+pend.length+' registro(s) a Google Sheets...');
+  var done=0;
+  pend.forEach(function(g){
+    var p=new URLSearchParams({fecha:g.fecha,proveedor:g.proveedor,nit:g.nit||'',numero_factura:g.numero_factura||'',concepto:g.concepto||'',categoria:g.categoria||'',valor:g.valor});
+    fetch(url+'?'+p.toString(),{method:'GET',mode:'no-cors'})
+      .finally(function(){done++;if(done===pend.length){gastos=gastos.map(function(g){return Object.assign({},g,{synced:true});});save();render();stats();st2('ok',pend.length+' registro(s) enviados a Google Sheets');}});
+  });
+}
+
+// GUIA
+function toggleGuia(){
+  var b=document.getElementById('gbody'),a=document.getElementById('garr');
+  b.classList.toggle('on');
+  a.innerHTML=b.classList.contains('on')?'&#9650;':'&#9660;';
+}
+function copiarScript(){
+  var c=document.getElementById('scriptcode').textContent;
+  navigator.clipboard.writeText(c).then(function(){alert('Codigo copiado');}).catch(function(){alert('Copia manualmente');});
+}
+
+// HELPERS
+function st(type,msg){
+  var b=document.getElementById('stbox');b.className='st '+type;
+  document.getElementById('stmsg').textContent=msg;
+  document.getElementById('stspin').style.display=type==='ld'?'block':'none';
+  if(type!=='ld')setTimeout(hideSt,5000);
+}
+function hideSt(){document.getElementById('stbox').className='st';}
+function st2(type,msg){
+  var b=document.getElementById('stbox2');b.className='st '+(type==='ld'?'ld':type==='ok'?'ok':'er');
+  document.getElementById('stmsg2').textContent=msg;
+}
+function save(){localStorage.setItem('gIA_v6',JSON.stringify(gastos));}
+function hoy(){return new Date().toISOString().split('T')[0];}
+function fmt(n){return Number(n||0).toLocaleString('es-CO');}
+</script>
+</body>
+</html>
